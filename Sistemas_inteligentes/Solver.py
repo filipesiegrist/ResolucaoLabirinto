@@ -25,7 +25,15 @@
 import spade
 
 class Solver(spade.Agent.Agent):
+	#vetor com coordenadas [0] - x
+	#                      [1] - y
 	global position[]
+	#vetor com o caminho percorrido
+	# Posição:
+	# 0	c
+	# 1	d
+	# 2	b
+	# 3	e
 	global path[]
 	
 	#Filipe
@@ -34,10 +42,12 @@ class Solver(spade.Agent.Agent):
 	#Escolhe posicao aleatoria
 	class Move(spade.Behaviour.Behaviour):
 		
+		
 	#Daniel. 
 	#Envia request para o labirinto (ver como ele interpreta)
 	#Recebe "inform" com 'true' ou 'false'
 	class VerifyPosition(spade.Behaviour.Behaviour):
+		
 		
 	class Start(spade.Behaviour.OneShotBehaviour):
 		def _process(self):
@@ -52,4 +62,18 @@ class Solver(spade.Agent.Agent):
 			msg.setContent('criar')            
 			self.myAgent.send(msg)
 			print "Mensagem enviada de CRIAR"
+			
 	class Propose(spade.Behaviour.Behaviour):
+		
+		
+	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
+	def _setup(self):
+		enderecohost = "a@127.0.0.1"
+		
+		#adiciona o comportamento de começar o labirinto
+		self.addBehaviour(self.Start())
+		#adiciona um template de mensagem para receber posições de movimento
+		templatePos = spade.Behaviour.ACLTemplate()
+		templatePos.setSender(spade.AID.aid(enderecohost,["xmpp://" , enderecohost]))
+		tPos = spade.Behaviour.MessageTemplate(templatePos)
+		self.addBehaviour(self.RecMsgBehav(),tPos)
