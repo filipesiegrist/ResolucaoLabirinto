@@ -27,27 +27,34 @@ import spade
 class Solver(spade.Agent.Agent):
 	#vetor com coordenadas [0] - x
 	#                      [1] - y
-	global position[]
+	global position
+	position = []
 	#vetor com o caminho percorrido
 	# Posição:
 	# 0	c
 	# 1	d
 	# 2	b
 	# 3	e
-	global path[]
+	global path 
+	path = []
 	
 	#Filipe
 	#Envia request com posicoes disoniveis
 	#Recebe vetor com c/d/b/e
 	#Escolhe posicao aleatoria
 	class Move(spade.Behaviour.Behaviour):
-		
+		def _process(self):
+			#envia request com posicoes disponiveis
+			msg = spade.ACLMessage.ACLMessage()
+			msg.setPerformative("request")
+			msg.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
 		
 	#Daniel. 
 	#Envia request para o labirinto (ver como ele interpreta)
 	#Recebe "inform" com 'true' ou 'false'
 	class VerifyPosition(spade.Behaviour.Behaviour):
-		
+		def _process(self):
+			print "verifica"
 		
 	class Start(spade.Behaviour.OneShotBehaviour):
 		def _process(self):
@@ -64,16 +71,29 @@ class Solver(spade.Agent.Agent):
 			print "Mensagem enviada de CRIAR"
 			
 	class Propose(spade.Behaviour.Behaviour):
-		
+		global a
 		
 	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
 	def _setup(self):
-		enderecohost = "a@127.0.0.1"
+		self.enderecohost = "tabuleiro@127.0.0.1"
 		
 		#adiciona o comportamento de começar o labirinto
 		self.addBehaviour(self.Start())
+		
 		#adiciona um template de mensagem para receber posições de movimento
 		templatePos = spade.Behaviour.ACLTemplate()
-		templatePos.setSender(spade.AID.aid(enderecohost,["xmpp://" , enderecohost]))
+		templatePos.setSender(spade.AID.aid(self.enderecohost,["xmpp://" , self.enderecohost]))
 		tPos = spade.Behaviour.MessageTemplate(templatePos)
-		self.addBehaviour(self.RecMsgBehav(),tPos)
+		
+		#adiciona comportamento de move
+		self.addBehaviour(self.Move(),tPos)
+
+#testando a classe
+
+ip = '127.0.0.1'
+teste = Solver("teste@"+ip, "secret") 
+teste.start()
+
+time.sleep(10)
+
+teste.stop()
