@@ -23,6 +23,8 @@
 #  
 
 import spade
+import time
+from random import randint
 
 class Solver(spade.Agent.Agent):
 	#vetor com coordenadas [0] - x
@@ -39,15 +41,22 @@ class Solver(spade.Agent.Agent):
 	path = []
 	
 	#Filipe
-	#Envia request com posicoes disoniveis
+	#Envia request com posicoes dispniveis
 	#Recebe vetor com c/d/b/e
 	#Escolhe posicao aleatoria
 	class Move(spade.Behaviour.Behaviour):
 		def _process(self):
+			print "movendo"
 			#envia request com posicoes disponiveis
 			msg = spade.ACLMessage.ACLMessage()
 			msg.setPerformative("request")
 			msg.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+			msg.setSender('solver')
+			#acao e a posicao aleatoria
+			acoes = ['c','b','e','d']
+			acao = acoes[randint(0,3)]
+			msg.setContent(acao)         
+			self.myAgent.send(msg)
 		
 	#Daniel. 
 	#Envia request para o labirinto (ver como ele interpreta)
@@ -56,12 +65,12 @@ class Solver(spade.Agent.Agent):
 		def _process(self):
 			print "verifica"
 		
-	class Start(spade.Behaviour.OneShotBehaviour):
+	class StartAction(spade.Behaviour.OneShotBehaviour):
 		def _process(self):
-			template = spade.Behaviour.ACLTemplate()
-			template.setPerformative("inform")
-			t = spade.Behaviour.MessageTemplate(template)
-			self.myAgent.addBehaviour(teste.resposta(),t) 
+			# template = spade.Behaviour.ACLTemplate()
+			# template.setPerformative("inform")
+			# t = spade.Behaviour.MessageTemplate(template)
+			# self.myAgent.addBehaviour(teste.resposta(),t) 
 			msg = spade.ACLMessage.ACLMessage()
 			msg.setPerformative("request")
 			#msg.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1"))
@@ -75,18 +84,17 @@ class Solver(spade.Agent.Agent):
 		
 	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
 	def _setup(self):
-		self.enderecohost = "tabuleiro@127.0.0.1"
-		
 		#adiciona o comportamento de começar o labirinto
-		self.addBehaviour(self.Start())
+		self.addBehaviour(self.StartAction())
 		
 		#adiciona um template de mensagem para receber posições de movimento
 		templatePos = spade.Behaviour.ACLTemplate()
-		templatePos.setSender(spade.AID.aid(self.enderecohost,["xmpp://" , self.enderecohost]))
+		templatePos.setPerformative("inform")
+		templatePos.setSender(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
 		tPos = spade.Behaviour.MessageTemplate(templatePos)
 		
 		#adiciona comportamento de move
-		self.addBehaviour(self.Move(),tPos)
+		#self.addBehaviour(self.Move(),tPos)
 
 #testando a classe
 
