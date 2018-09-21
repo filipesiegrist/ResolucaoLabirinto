@@ -41,11 +41,16 @@ class Solver(spade.Agent.Agent):
 	path = []
 	
 	#Filipe
-	#Envia request com posicoes dispniveis
+	#Recebe inform com posicoes dispniveis
 	#Recebe vetor com c/d/b/e
 	#Escolhe posicao aleatoria
+	#Envia mensagem pra efetuar movimento
 	class Move(spade.Behaviour.Behaviour):
 		def _process(self):
+			#para ser ativado vai receber uma mensagem com as posicoes disponiveis
+			
+			
+			
 			print "movendo"
 			#envia request com posicoes disponiveis
 			msg = spade.ACLMessage.ACLMessage()
@@ -59,42 +64,67 @@ class Solver(spade.Agent.Agent):
 			self.myAgent.send(msg)
 		
 	#Daniel. 
-	#Envia request para o labirinto (ver como ele interpreta)
-	#Recebe "inform" com 'true' ou 'false'
+	#Recebe "inform" com 'true' ou 'false' dizendo se chegou no objetivo
+	#Se é true: Faz proposta de solucao
+	#Se é false: Envia mensagem pedindo sucessores
 	class VerifyPosition(spade.Behaviour.Behaviour):
 		def _process(self):
 			print "verifica"
-		
+	
+	#Filipe
+	#Manda mensagem de criar e recebe essa mesma mensagem
+	#
 	class StartAction(spade.Behaviour.OneShotBehaviour):
 		def _process(self):
-			# template = spade.Behaviour.ACLTemplate()
-			# template.setPerformative("inform")
-			# t = spade.Behaviour.MessageTemplate(template)
-			# self.myAgent.addBehaviour(teste.resposta(),t) 
-			msg = spade.ACLMessage.ACLMessage()
-			msg.setPerformative("request")
-			#msg.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1"))
-			msg.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
-			msg.setContent('criar')            
-			self.myAgent.send(msg)
+			
+			msgcria = spade.ACLMessage.ACLMessage()
+			msgcria.setPerformative("request")
+			msgcria.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+			msgcria.setContent('criar')            
+			self.myAgent.send(msgcria)
 			print "Mensagem enviada de CRIAR"
+			
+			#recebe mensagem de criar para prosseguir
+			msgrecebida = self._receive(True);
+			
+			#se a mensagem for valida:
+			if len(msg.getSender().getName()) > 0:
+				print "mensagem de 'criar com sucesso' recebida"
+				#envia mensagem pedindo as posicoes
+				msgsucessores = spade.ACLMessage.ACLMessage()
+				msgsucessores.setPerformative("request")
+				msgsucessores.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+				msgcria.setContent('sucessores')
 			
 	class Propose(spade.Behaviour.Behaviour):
 		global a
 		
 	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
 	def _setup(self):
-		#adiciona o comportamento de começar o labirinto
-		self.addBehaviour(self.StartAction())
 		
+		#--------------Comportamento StartAction------------------------------#
+		
+		# O comportamento StartAction vai receber uma mensagem de confirmacao da criacao
+		templateCria = spade.Behaviour.ACLTemplate()
+		templateCria.setPerformative("inform")
+		templateCria.setContent("criar")
+		tCria = spade.Behaviour.MessageTemplate(templateCria)
+		
+		#adiciona o comportamento de começar o labirinto com um template de mensagem pra receber criacao
+		self.addBehaviour(self.StartAction(),tCria)
+
+
+		#--------------Comportamento VerifyPosition------------------------------#
+
 		#adiciona um template de mensagem para receber posições de movimento
 		templatePos = spade.Behaviour.ACLTemplate()
 		templatePos.setPerformative("inform")
 		templatePos.setSender(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+        templatePos.setContent("criar")
 		tPos = spade.Behaviour.MessageTemplate(templatePos)
 		
 		#adiciona comportamento de move
-		#self.addBehaviour(self.Move(),tPos)
+		self.addBehaviour(self.Move(),tPos)
 
 #testando a classe
 
