@@ -133,29 +133,17 @@ class Solver(spade.Agent.Agent):
 			#ordem das acoes
 			acoes = ["cima","dir","baixo","esq"]
 			
-			print "Comportamento Move Iniciado"
+			print "Move: Comportamento Move Iniciado"
 			
 			msgrecebida = self._receive(True)
 			
 			#vetor dizendo onde pode mover 0 é parede e 1 é caminho
 			posicoes = msgrecebida.getContent()
 			
-			print "mensagem recebida pelo move: " , posicoes
+			print "Move: mensagem recebida: " , posicoes
 			
 			#Recebe qual a proxima acao a ser feita das as posicoes
 			acao = MazeMap.proxDirecao(posicoes)
-			
-			#-----------<escolha da acao a ser feita>-------------
-			
-			#escolhe acao nova enquanto der caminho
-			# acao = randint(0,3)*3 +1
-			# while posicoes[acao] != '1':
-				# acao = randint(0,3)*+1
-				# #print "Iria para " , acoes[acao] 
-			
-			# print "Movendo para " , acoes[acao]
-			#-------------</escolhadeacaoaserfeita>-------------
-			
 			
 			#Envia uma mensagem de movimento para o labirinto
 			msgmove = spade.ACLMessage.ACLMessage()
@@ -163,7 +151,6 @@ class Solver(spade.Agent.Agent):
 			msgmove.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
 			msgmove.setContent(acoes[acao])            
 			self.myAgent.send(msgmove)
-			print "enfaggot"
 			#Nao precisa receber a resposta pq sabemos que sera automaticamente sucesso
 			
 			#normaliza os numeros das direcoes para encaixarem de 0-3
@@ -171,7 +158,24 @@ class Solver(spade.Agent.Agent):
 			#atualiza o mapa
 			MazeMap.registraMovimento(movimento)
 			MazeMap.imprime()
-			#print "Estou na coordenada " , MazeMap.getPosition()
+			
+			#Cria o template para o teste de objetivo
+			templateTst = spade.Behaviour.ACLTemplate()
+			templateTst.setPerformative("inform")
+			templateTst.setSender(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+			tTst = spade.Behaviour.MessageTemplate(templateTst)
+			
+			#Cria o comportamento do teste de objetivo
+			print "Move: VerifyPosition criado"
+			self.myAgent.addBehaviour(self.myAgent.VerifyPosition(),tTst)
+			
+			#Envia mensagem de teste de objetivo
+			msgteste = spade.ACLMessage.ACLMessage()
+			msgteste.setPerformative("request")
+			msgteste.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+			msgteste.setContent("obj")            
+			self.myAgent.send(msgteste)
+			print "Move: pedido de teste de objetivo enviado"
 			
 			#Remove esse comportamento
 			self.myAgent.removeBehaviour(self.myAgent.Move())
@@ -182,7 +186,21 @@ class Solver(spade.Agent.Agent):
 	#Se é false: Envia mensagem pedindo sucessores
 	class VerifyPosition(spade.Behaviour.Behaviour):
 		def _process(self):
-			print "verifica"
+			print "VerifyPosition: Comportamento criado"
+			
+			#mensagem, pode conter true ou false
+			msgrecebida = self._receive(True)
+			
+			valorTeste = msgrecebida.getContent()
+			
+			#Verifica se chegou ao objetivo
+			if valorTeste == "True":
+				#Envia string com todo o caminho para o labirinto e chama o comportamento Propose
+			#senão
+			else:
+				
+		#Remove esse comportamento
+			self.myAgent.removeBehaviour(self.myAgent.VerifyPosition())
 	
 	#Filipe
 	#Manda mensagem de criar e recebe essa mesma mensagem
@@ -196,14 +214,14 @@ class Solver(spade.Agent.Agent):
 			msgcria.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
 			msgcria.setContent('criar')            
 			self.myAgent.send(msgcria)
-			print "Mensagem enviada de CRIAR"
+			print "StartAction: Mensagem enviada de CRIAR"
 			
 			#recebe mensagem de criar para prosseguir
 			msgrecebida = self._receive(True);
 			
 			#se a mensagem for valida:
 			if len(msgrecebida.getSender().getName()) > 0:
-				print "mensagem de 'criar com sucesso' recebida: " , msgrecebida.getContent()
+				print "StartAction: mensagem de 'criar com sucesso' recebida: " , msgrecebida.getContent()
 				
 				#Cria template do Move
 				
@@ -223,7 +241,7 @@ class Solver(spade.Agent.Agent):
 				msgsucessores.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
 				msgsucessores.setContent('sucessores')          
 				self.myAgent.send(msgsucessores)
-				print "mensagem dos sucessores enviada"
+				print "StartAction: mensagem dos sucessores enviada"
 			
 	class Propose(spade.Behaviour.Behaviour):
 		global a
