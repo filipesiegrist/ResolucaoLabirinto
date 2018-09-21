@@ -108,12 +108,27 @@ class Mapa:
 	#retorna numero de 0-3 com a acao
 	def proxDirecao(self,posicoes):
 		acoes = ["0","cima","0","0","dir","0","0","baixo","0","0","esq"]
+		
+		#----------------------------JEITO ALEATÓRIO----------------------------
 		#escolhe acao nova enquanto der caminho
-		acao = randint(0,3)
-		while posicoes[acao*3 +1] != '1':
-			acao = randint(0,3)
-			#print "Iria para " , acoes[acao] 
-		print "Movendo para " , acoes[acao*3+1]
+		# acao = randint(0,3)
+		# while posicoes[acao*3 +1] != '1':
+			# acao = randint(0,3)
+			# #print "Iria para " , acoes[acao] 
+		#----------------------------JEITO ALEATÓRIO----------------------------
+		
+		#----------------------------JEITO ALTERNATIVO----------------------------
+		#Escolhe as direcoes de acordo com uma prioridade: 
+		#Ordem decrescente: c-d-b-e , ou 0,1,2,3
+		
+		#Da prioridade para o menor numero
+		# for i in range(4):
+			# if posicoes[i*3 +1] == '1':
+				# acao = i
+		#----------------------------JEITO ALTERNATIVO----------------------------
+		
+		print "acao = ",acao,"Movendo para " , acoes[acao*3+1]
+		
 		return acao
 
 	#verifica se o seguinte nodo já esta na lista de nodos
@@ -122,6 +137,15 @@ class Mapa:
 			if nodo == coord:
 				return True
 		return False
+
+	#pega o vetor e diz o numero de passagens que existem
+	def numeroPassagens(posicoes):
+		contador = 0
+		#percorre as direcoes e conta os 1's
+		for i in range(4):
+			if posicoes[i*3 +1] == '1':
+				contador++
+		return contador
 
 class Solver(spade.Agent.Agent):
 	#Classe global, que é o mapa do labirinto
@@ -204,7 +228,7 @@ class Solver(spade.Agent.Agent):
 			#senão pede os sucessores e chama o comportamento Move novamente
 			else:
 				print "VerifyPosition: Não é objetivo"
-				#time.sleep(1)
+				time.sleep(5)
 				#Cria template de mensagem para o comportamento Move
 				
 				#adiciona um template de mensagem para receber posições de movimento
