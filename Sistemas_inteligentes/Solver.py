@@ -79,9 +79,10 @@ class Mapa:
 			#x--
 			self.__position[0] -= 1
 			
-		
-		#adiciona a nova coordenada na lista de nodos
-		self.__nodes.append(self.__position)
+		coordenada = self.__position[:]
+		#adiciona a nova coordenada na lista de nodos se ela nao consta
+		if not self.coordenadaExistente(coordenada):
+			self.__nodes.append(coordenada)
 	
 	#retorna a posicao
 	def getPosition(self):
@@ -114,6 +115,13 @@ class Mapa:
 			#print "Iria para " , acoes[acao] 
 		print "Movendo para " , acoes[acao*3+1]
 		return acao
+
+	#verifica se o seguinte nodo já esta na lista de nodos
+	def coordenadaExistente(self,coord):
+		for nodo in self.__nodes:
+			if nodo == coord:
+				return True
+		return False
 
 class Solver(spade.Agent.Agent):
 	#Classe global, que é o mapa do labirinto
@@ -152,11 +160,8 @@ class Solver(spade.Agent.Agent):
 			msgmove.setContent(acoes[acao])            
 			self.myAgent.send(msgmove)
 			#Nao precisa receber a resposta pq sabemos que sera automaticamente sucesso
-			
-			#normaliza os numeros das direcoes para encaixarem de 0-3
-			movimento = acao
 			#atualiza o mapa
-			MazeMap.registraMovimento(movimento)
+			MazeMap.registraMovimento(acao)
 			MazeMap.imprime()
 			
 			#Cria o template para o teste de objetivo
@@ -193,11 +198,32 @@ class Solver(spade.Agent.Agent):
 			
 			valorTeste = msgrecebida.getContent()
 			
-			#Verifica se chegou ao objetivo
+			#Se chegou ao objetivo envia string com todo o caminho para o labirinto e chama o comportamento Propose
 			if valorTeste == "True":
-				#Envia string com todo o caminho para o labirinto e chama o comportamento Propose
-			#senão
+				print "VerifyPosition: É o objetivo"
+			#senão pede os sucessores e chama o comportamento Move novamente
 			else:
+				print "VerifyPosition: Não é objetivo"
+				#time.sleep(1)
+				#Cria template de mensagem para o comportamento Move
+				
+				#adiciona um template de mensagem para receber posições de movimento
+				templatePos = spade.Behaviour.ACLTemplate()
+				templatePos.setPerformative("inform")
+				templatePos.setSender(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+				tPos = spade.Behaviour.MessageTemplate(templatePos)
+				
+				#adiciona comportamento de move
+				print "VerifyPosition: Chamou comportamento Move"
+				self.myAgent.addBehaviour(self.myAgent.Move(),tPos)
+				
+				#Envia mensagem pedindo as posicoes disponiveis
+				msgsucessores = spade.ACLMessage.ACLMessage()
+				msgsucessores.setPerformative("request")
+				msgsucessores.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+				msgsucessores.setContent('sucessores')          
+				self.myAgent.send(msgsucessores)
+				print "VerifyPosition: mensagem dos sucessores enviada"
 				
 		#Remove esse comportamento
 			self.myAgent.removeBehaviour(self.myAgent.VerifyPosition())
@@ -261,24 +287,12 @@ class Solver(spade.Agent.Agent):
 		#adiciona o comportamento de começar o labirinto com um template de mensagem pra receber criacao
 		self.addBehaviour(self.StartAction(),tCria)
 
-
-		#--------------Comportamento VerifyPosition------------------------------#
-
-		#adiciona um template de mensagem para receber posições de movimento
-		#templatePos = spade.Behaviour.ACLTemplate()
-		#templatePos.setPerformative("inform")
-		#templatePos.setContent("criar")
-		#tPos = spade.Behaviour.MessageTemplate(templatePos)
-		
-		#adiciona comportamento de move
-		#self.addBehaviour(self.Move(),tPos)
-
 #testando a classe
 
 ip = '127.0.0.1'
 teste = Solver("teste@"+ip, "secret") 
 teste.start()
 
-time.sleep(10)
+time.sleep(300)
 
 teste.stop()
