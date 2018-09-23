@@ -292,11 +292,84 @@ class Mapa:
 	
 	#Mostra os movimentos utilizados
 	def imprimeStatusFinal(self):
-		print "--------------STATUS FINAL--------------"
+		print "----------------------------STATUS FINAL----------------------------"
+		print "Posicao inicial: " , self.__nodes[0]
+		print "Posicao da saida: " , self.getPosition()
+		print "Caminho percorrido: " , self.caminhoSolucao(self.__path)
+		print "Caminho mais curto: " , self.caminhoSolucao(self.caminhoMaisCurto())
 		print "Numero de movimentos usando a regra da mao esquerda: " , self.__num_lefthandrule
 		print "Numero de movimentos aleatorios: " , self.__num_random
-		print "--------------STATUS FINAL--------------"
+		print "----------------------------STATUS FINAL----------------------------"
+		
+	#Retorna um vetor de direcoes (0-3) do inicio ate a posicao atual
+	def caminhoMaisCurto(self):
+		#deslocamento em X. Distancia horizontal que tem que ser percorrida
+		deltaX = self.__position[0] - self.__nodes[0][0]
+		#deslocamento em Y. Distancia vertical que tem que ser percorrida
+		deltaY = self.__position[1] - self.__nodes[0][1]
+		
+		
+		direcoes = []
+		#print "caminhoMaisCurto: deltax =" , deltaX, " deltay=" , deltaY
+		#Se deltaX é positivo, adiciona esse numero em direitas, senao esquerdas
+		if deltaX >= 0:
+			direcaoX = 1
+		else:
+			direcaoX = 3
+			deltaX *= -1
+			
+		#Se deltaY é positivo, adiciona esse numero em subidas, senao descidas
+		if deltaY >= 0:
+			direcaoY = 0
+		else:
+			direcaoY = 2
+			deltaY *= -1
+			
+		#print "caminhoMaisCurto: direcaox =" , direcaoX, " direcaoy=" , direcaoY
+		
+		#Adiciona os deslocamentos horizontais no vetor
+		for i in range(deltaX):
+			direcoes.append(direcaoX)
+			
+		#Adiciona tambem os verticais
+		for j in range(deltaY):
+			direcoes.append(direcaoY)
+		#print "caminhoMaisCurto: direcoes = " , direcoes
+		return direcoes
 	
+	#Retorna uma string com um caminho, dado um vetor com as direcoes (0-3)
+	#String no formato "x|x|x|x...x|x"
+	def caminhoSolucao(self,vetordirecoes):
+		#condicao inicial. Se vetor vazio manda string vazia
+		if not vetordirecoes: return ""
+		
+		#print "caminhoSolucao: Oi"
+		#faz uma copia pra não cagar o vetor de entrada
+		vetor = vetordirecoes[:]
+		#lista que gerara a string de saida
+		caminho = []
+		#insere os caracteres com espacamento
+		while vetor:
+			item = vetor.pop(0)
+			if item == 0:
+				char = 'c'
+			elif item == 1:
+				char = 'd'
+			elif item == 2:
+				char = 'b'
+			elif item == 3:
+				char = 'e'
+			else:
+				break
+			caminho.append(char)
+			caminho.append("|")
+		#print "caminhoSolucao: Tchau"
+		#remove o ultimo "|"
+		caminho.pop(-1)
+		#gera string de saida
+		stringsaida = ''.join(caminho)
+		return stringsaida
+		
 class Solver(spade.Agent.Agent):
 	#Classe global, que é o mapa do labirinto
 	global MazeMap
@@ -375,8 +448,7 @@ class Solver(spade.Agent.Agent):
 			#Se chegou ao objetivo envia string com todo o caminho para o labirinto e chama o comportamento Propose
 			if valorTeste == "true":
 				print "VerifyPosition: É o objetivo"
-				x = raw_input("Continuar? ")
-				MazeMap.imprimeStatusFinal()
+				#x = raw_input("Continuar? ")
 				
 				#Cria o template de mensagem do propose:
 				templateAcc = spade.Behaviour.ACLTemplate()
@@ -461,7 +533,15 @@ class Solver(spade.Agent.Agent):
 	class Propose(spade.Behaviour.Behaviour):
 		def _process(self):
 			print "Propose: acordou."
+			print "Propose: Posicao final." , MazeMap.getPosition()
+			MazeMap.imprimeStatusFinal()
+			#print "Caminho proposto: " , MazeMap.caminhoSolucao(MazeMap.getPath())
+			#print "Caminho otimizado: " , MazeMap.caminhoSolucao(MazeMap.caminhoMaisCurto())
 			x = raw_input("Propose: Continuar? ")
+			
+			#Envia mensagem com o caminho otimizado para o labirinto e espera a resposta. 
+			
+			
 			
 	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
 	def _setup(self):
@@ -481,7 +561,7 @@ class Solver(spade.Agent.Agent):
 #testando a classe
 
 ip = '127.0.0.1'
-teste = Solver("teste@"+ip, "secret") 
+teste = Solver("filipe@"+ip, "secret") 
 teste.start()
 
 time.sleep(300)
