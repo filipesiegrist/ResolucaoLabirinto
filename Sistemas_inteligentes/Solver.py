@@ -352,13 +352,13 @@ class Mapa:
 		while vetor:
 			item = vetor.pop(0)
 			if item == 0:
-				char = 'c'
+				char = 'cima'
 			elif item == 1:
-				char = 'd'
+				char = 'dir'
 			elif item == 2:
-				char = 'b'
+				char = 'baixo'
 			elif item == 3:
-				char = 'e'
+				char = 'esq'
 			else:
 				break
 			caminho.append(char)
@@ -541,6 +541,24 @@ class Solver(spade.Agent.Agent):
 			
 			#Envia mensagem com o caminho otimizado para o labirinto e espera a resposta. 
 			
+			#Prepara mensagem de propose
+			msgproposta = spade.ACLMessage.ACLMessage()
+			msgproposta.setPerformative("propose")
+			msgproposta.addReceiver(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+			msgproposta.setContent(MazeMap.caminhoSolucao(MazeMap.caminhoMaisCurto()))            
+			self.myAgent.send(msgproposta)
+			print "Propose: Proposta de solucao enviada: ", MazeMap.caminhoSolucao(MazeMap.caminhoMaisCurto())
+			
+			
+			#Recebe mensagem de resposta:
+			msgrecebida = self._receive(True);
+			perf = msgrecebida.getPerformative()
+			if perf == "accept-proposal":
+				print "Solucao encontrada!"
+			else:
+				print "Solucao falhou!"
+			self.myAgent.stop()
+			
 			
 			
 	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
@@ -561,7 +579,7 @@ class Solver(spade.Agent.Agent):
 #testando a classe
 
 ip = '127.0.0.1'
-teste = Solver("filipe@"+ip, "secret") 
+teste = Solver("filipedaniel@"+ip, "secret") 
 teste.start()
 
 time.sleep(300)
