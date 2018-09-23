@@ -50,6 +50,15 @@ class Mapa:
 	#prevpath
 	#Acao anterior, segue o mesmo padrao de path
 	
+	
+	#Contadores para debugging:
+	
+	#num_lefthandrule
+	#Numero de movimentos usando a regra da mao esquerda
+	
+	#num_random
+	#Numero de movimentos aleatorios no mapa
+	
 	def __init__(self):
 		#posicao atual no labirinto
 		self.__position = [0,0]
@@ -63,6 +72,11 @@ class Mapa:
 		self.__nodes = []
 		#adiciona a posicao inicial
 		self.__nodes.append([0,0])
+		
+		
+		#Inicia os contadores como zero
+		self.__num_lefthandrule = 0
+		self.__num_random = 0
 	
 	#Funcao que efetua o movimento e atualiza as variaveis:
 	#	path
@@ -181,20 +195,23 @@ class Mapa:
 			#Pega a direcao absoluta pega, que depende da ultima acao do agente
 			direcao = self.dirAbsoluta(direcaopreferida[i])
 			#verifica se e possivel executar essa acao
-			print "proxDirecao: tentando ir à dir preferida: " , direcaopreferidanome[i]
-			print "proxDirecao: tentando ir à dir absoluta" , direcaopreferidanome[self.dirAbsoluta(i)]
+			#print "proxDirecao: tentando ir à dir preferida: " , direcaopreferidanome[i]
+			#print "proxDirecao: tentando ir à dir absoluta" , direcaopreferidanome[self.dirAbsoluta(i)]
 			if posicoes[direcao*3 +1] == '1':
 				acao = direcao
-				print "proxDirecao: conseguiu"
+				#print "proxDirecao: conseguiu"
 				break
-			else:
-				print "proxDirecao: nao disponivel"
+			#else:
+				#print "proxDirecao: nao disponivel"
 		
 		#-------------------------------------------------Regra da mao esquerda-------------------------------------------------
 		
 		#Agora verifica se ja passou por essa coordenada. Se ja passou, escolhe outra aleatoriamente
 		if (self.coordenadaExistente(self.coordenadaMovimento(acao))):
-			print "proxDirecao: Ja foi para esse lugar. Escolhe um lugar aleatorio agora."
+			#incrementa o contador de movimentos aleatorios
+			self.__num_random += 1
+			
+			print "\nproxDirecao: Ja foi para esse lugar. Escolhe um lugar aleatorio agora."
 			#----------------------------JEITO ALEATÓRIO----------------------------
 			#escolhe acao nova enquanto der caminho
 			acao = randint(0,3)
@@ -204,12 +221,10 @@ class Mapa:
 				
 			print "proxDirecao: Ira para a coordenada: ", self.coordenadaMovimento(acao)
 			#----------------------------JEITO ALEATÓRIO----------------------------
-		
-		
-		# print "proxDirecao: acao = ",acao,"Movendo para " , acoes[acao*3+1]
-		# print "proxDirecao: Movendo relativamente para " , acoes[direcaopreferida[i]*3+1]
-		# print "------------------------DEBUG------------------------"
-		# print "------------------------DEBUG------------------------"
+			print "\n"
+		else:
+			#incrementa o contador de movimentos usando a regra da mao esquerda
+			self.__num_lefthandrule += 1
 		
 		return acao
 
@@ -274,6 +289,13 @@ class Mapa:
 		elif mov == 3:
 			coordenadas[0] -= 1
 		return coordenadas
+	
+	#Mostra os movimentos utilizados
+	def imprimeStatusFinal(self):
+		print "--------------STATUS FINAL--------------"
+		print "Numero de movimentos usando a regra da mao esquerda: " , self.__num_lefthandrule
+		print "Numero de movimentos aleatorios: " , self.__num_random
+		print "--------------STATUS FINAL--------------"
 	
 class Solver(spade.Agent.Agent):
 	#Classe global, que é o mapa do labirinto
@@ -353,6 +375,8 @@ class Solver(spade.Agent.Agent):
 			#Se chegou ao objetivo envia string com todo o caminho para o labirinto e chama o comportamento Propose
 			if valorTeste == "true":
 				print "VerifyPosition: É o objetivo"
+				MazeMap.imprimeStatusFinal()
+				#self.myAgent.removeBehaviour(self.myAgent.VerifyPosition())
 			#senão pede os sucessores e chama o comportamento Move novamente
 			else:
 				print "VerifyPosition: Não é objetivo"
