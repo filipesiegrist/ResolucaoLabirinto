@@ -57,8 +57,8 @@ class Mapa:
 		self.__prevposition = [0,0]
 		#direcoes que foram percorridas
 		self.__path = []
-		#direcao anterior à atual
-		self.__prevpath = -1
+		#direcao anterior à atual, 0 como referencia. Significa que o agente estava virado para cima
+		self.__prevpath = 0
 		#todas as coordenadas dos nodos percorridos
 		self.__nodes = []
 		#adiciona a posicao inicial
@@ -131,14 +131,6 @@ class Mapa:
 	def proxDirecao(self,posicoes):
 		acoes = ["0","cima","0","0","dir","0","0","baixo","0","0","esq"]
 		
-		#----------------------------JEITO ALEATÓRIO----------------------------
-		#escolhe acao nova enquanto der caminho
-		# acao = randint(0,3)
-		# while posicoes[acao*3 +1] != '1':
-			# acao = randint(0,3)
-			# #print "Iria para " , acoes[acao] 
-		#----------------------------JEITO ALEATÓRIO----------------------------
-		
 		#----------------------------JEITO ALTERNATIVO----------------------------
 		#Escolhe as direcoes de acordo com uma prioridade: 
 		#Ordem decrescente: c-d-b-e , ou 0,1,2,3
@@ -152,22 +144,72 @@ class Mapa:
 		
 		#-----------------------------Jeito++----------------------------
 		
-		if self.numeroPassagens(posicoes) > 1:
-			#Escolhe o caminho na prioridade, mas tem que ser diferente do ultimo
-			for i in range(4):
-				if posicoes[i*3 +1] == '1':
-					if (i != self.__prevpath - 2 and i != self.__prevpath + 2):
-						acao = i
-						break
-		else:
-			for i in range(4):
-				if posicoes[i*3 +1] == '1':
-					acao = i
-					break
+		# if self.numeroPassagens(posicoes) > 1:
+			# #Escolhe o caminho na prioridade, mas tem que ser diferente do ultimo
+			# for i in range(4):
+				# if posicoes[i*3 +1] == '1':
+					# if (i != self.__prevpath - 2 and i != self.__prevpath + 2):
+						# acao = i
+						# break
+		# else:
+			# for i in range(4):
+				# if posicoes[i*3 +1] == '1':
+					# acao = i
+					# break
 		
 		#-----------------------------Jeito++-----------------------------
 		
-		#print "acao = ",acao,"Movendo para " , acoes[acao*3+1]
+		#-------------------------------------------------Regra da mao esquerda--------------------------------------------------
+		#tenta sempre seguir essas posicoes relativas na ordem:
+		#-esquerda (3)
+		#-cima (0)
+		#-direita (1)
+		#-baixo (2)
+		
+		
+		#vetor contendo essas prioridades para usar no for. Direcoes relativas
+		direcaopreferida = [3,0,1,2]
+		
+		
+		#print "------------------------DEBUG------------------------"
+		
+		#Se path estiver vazia a acao e cima. Se nao tiver pega path[-1]
+		
+		direcaopreferidanome = ["esquerda","cima","direita","baixo"]
+		
+		for i in range(4):
+			#Pega a direcao absoluta pega, que depende da ultima acao do agente
+			direcao = self.dirAbsoluta(direcaopreferida[i])
+			#verifica se e possivel executar essa acao
+			print "proxDirecao: tentando ir à dir preferida: " , direcaopreferidanome[i]
+			print "proxDirecao: tentando ir à dir absoluta" , direcaopreferidanome[self.dirAbsoluta(i)]
+			if posicoes[direcao*3 +1] == '1':
+				acao = direcao
+				print "proxDirecao: conseguiu"
+				break
+			else:
+				print "proxDirecao: nao disponivel"
+		
+		#-------------------------------------------------Regra da mao esquerda-------------------------------------------------
+		
+		#Agora verifica se ja passou por essa coordenada. Se ja passou, escolhe outra aleatoriamente
+		if (self.coordenadaExistente(self.coordenadaMovimento(acao))):
+			print "proxDirecao: Ja foi para esse lugar. Escolhe um lugar aleatorio agora."
+			#----------------------------JEITO ALEATÓRIO----------------------------
+			#escolhe acao nova enquanto der caminho
+			acao = randint(0,3)
+			while posicoes[acao*3 +1] != '1':
+				acao = randint(0,3)
+				#print "Iria para " , acoes[acao]
+				
+			print "proxDirecao: Ira para a coordenada: ", self.coordenadaMovimento(acao)
+			#----------------------------JEITO ALEATÓRIO----------------------------
+		
+		
+		# print "proxDirecao: acao = ",acao,"Movendo para " , acoes[acao*3+1]
+		# print "proxDirecao: Movendo relativamente para " , acoes[direcaopreferida[i]*3+1]
+		# print "------------------------DEBUG------------------------"
+		# print "------------------------DEBUG------------------------"
 		
 		return acao
 
@@ -186,7 +228,53 @@ class Mapa:
 			if posicoes[i*3 +1] == '1':
 				contador += 1
 		return contador
-
+	
+	
+	#Essa função pega o sentido de movimento do agente e determina para qual sentido ele deve ir.
+	#Ex: Se o agente executou uma subida (0) e quer ir à esquerda (3) a direcao absoluta é esquerda (3)
+	#	Já se o agente executou uma descida (2) e quer ir à esquerda (3) a direcao absoluta será a direita (2)
+	#recebe a posição direcao (0-3) e devolve a posição direcao (0-3)
+	def dirAbsoluta(self, dirRelativa):
+		#matriz de posicoes.
+		#matrizposicoes[x][y], onde:
+		#x: direcao que o agente tomou, (0-3)
+		#y: direcao relativa que ele quer sair
+		#o valor da matriz é a direcao absoluta
+		matrizposicoes = [ 
+							[0,1,2,3],
+							[1,2,3,0],
+							[2,3,0,1],
+							[3,0,1,2]
+						 ]
+						 
+		# a posicao X é self.__prevpath se __path esta vazia ou entao pega __path[-1]
+		#retorna a direcao atraves da matriz
+		if not self.__path:
+			X = 0
+		else:
+			X = self.__path[-1]
+		
+		return matrizposicoes[X][dirRelativa]
+	
+	#retorna as coordenadas hipoteticas de um determinado movimento
+	#movimento no padrao 0-3
+	#retorna vetor [x,y]
+	def coordenadaMovimento(self,mov):
+		#cima
+		coordenadas = self.__position[:]
+		if mov == 0:
+			coordenadas[1] += 1
+		#direita
+		elif mov == 1:
+			coordenadas[0] += 1
+		#baixo
+		elif mov == 2:
+			coordenadas[1] -= 1
+		#esquerda
+		elif mov == 3:
+			coordenadas[0] -= 1
+		return coordenadas
+	
 class Solver(spade.Agent.Agent):
 	#Classe global, que é o mapa do labirinto
 	global MazeMap
@@ -263,12 +351,13 @@ class Solver(spade.Agent.Agent):
 			valorTeste = msgrecebida.getContent()
 			
 			#Se chegou ao objetivo envia string com todo o caminho para o labirinto e chama o comportamento Propose
-			if valorTeste == "True":
+			if valorTeste == "true":
 				print "VerifyPosition: É o objetivo"
 			#senão pede os sucessores e chama o comportamento Move novamente
 			else:
 				print "VerifyPosition: Não é objetivo"
-				time.sleep(5)
+				#time.sleep(3)
+				#a = raw_input("Prosseguir? ")
 				#Cria template de mensagem para o comportamento Move
 				
 				#adiciona um template de mensagem para receber posições de movimento
