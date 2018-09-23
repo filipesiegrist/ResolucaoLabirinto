@@ -375,8 +375,20 @@ class Solver(spade.Agent.Agent):
 			#Se chegou ao objetivo envia string com todo o caminho para o labirinto e chama o comportamento Propose
 			if valorTeste == "true":
 				print "VerifyPosition: É o objetivo"
+				x = raw_input("Continuar? ")
 				MazeMap.imprimeStatusFinal()
-				#self.myAgent.removeBehaviour(self.myAgent.VerifyPosition())
+				
+				#Cria o template de mensagem do propose:
+				templateAcc = spade.Behaviour.ACLTemplate()
+				templateAcc.setSender(spade.AID.aid("tabuleiro@127.0.0.1",["xmpp://tabuleiro@127.0.0.1"]))
+				tAcc = spade.Behaviour.MessageTemplate(templateAcc)
+				
+				
+				#Chama o comportamento propose:
+				self.myAgent.addBehaviour(self.myAgent.Propose(),tAcc)
+				
+				#Remove a si mesmo
+				self.myAgent.removeBehaviour(self.myAgent.VerifyPosition())
 			#senão pede os sucessores e chama o comportamento Move novamente
 			else:
 				print "VerifyPosition: Não é objetivo"
@@ -447,8 +459,10 @@ class Solver(spade.Agent.Agent):
 				print "StartAction: mensagem dos sucessores enviada"
 			
 	class Propose(spade.Behaviour.Behaviour):
-		global a
-		
+		def _process(self):
+			print "Propose: acordou."
+			x = raw_input("Propose: Continuar? ")
+			
 	#Essa função tem que adicionar todos os comportamentos que a gente fez. Se eles recebem mensagem eles já criam o template
 	def _setup(self):
 		
