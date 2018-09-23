@@ -44,11 +44,21 @@ class Mapa:
 	#Lista dos nodos percorridos, ex:
 	# [0,0] , [1,0] , [1,1]
 	
+	#prevposition
+	#Posicao anterior, no mesmo formato de position
+	
+	#prevpath
+	#Acao anterior, segue o mesmo padrao de path
+	
 	def __init__(self):
 		#posicao atual no labirinto
 		self.__position = [0,0]
+		#adiciona a posicao anterior do labirinto
+		self.__prevposition = [0,0]
 		#direcoes que foram percorridas
 		self.__path = []
+		#direcao anterior à atual
+		self.__prevpath = -1
 		#todas as coordenadas dos nodos percorridos
 		self.__nodes = []
 		#adiciona a posicao inicial
@@ -62,8 +72,16 @@ class Mapa:
 	def registraMovimento(self,numdir):
 		referencia = ['c','d','b','e']
 		
+		#adiciona a ultima acao em prevpath se path no esta vazia
+		if self.__path:
+			self.__prevpath = self.__path[-1]
+		
 		#adiciona o numero em path
 		self.__path.append(numdir)
+		
+		#adiciona a posicao atual em prevposition
+		self.__prevposition = self.__position[:]
+		
 		
 		#atualiza as coordenadas:
 		if referencia[numdir] == 'c':
@@ -97,9 +115,13 @@ class Mapa:
 		return self.__nodes
 		
 	def imprime(self):
+		acao = ["cima","dir","baixo","esq"]
 		print "----------Mapa do Labirinto-----------"
 		print "Posicao atual: " , self.__position
+		print "Posicao anterior: " , self.__prevposition
 		print "Caminho percorrido: " , self.__path
+		print "Acao Atual: " , acao[self.__path[-1]]
+		print "Acao Anterior: " , acao[self.__prevpath]
 		print "Nodos percorridos: " , self.__nodes
 		print "-------------Fim do Mapa---------------"
 
@@ -125,9 +147,27 @@ class Mapa:
 		# for i in range(4):
 			# if posicoes[i*3 +1] == '1':
 				# acao = i
+				# break
 		#----------------------------JEITO ALTERNATIVO----------------------------
 		
-		print "acao = ",acao,"Movendo para " , acoes[acao*3+1]
+		#-----------------------------Jeito++----------------------------
+		
+		if self.numeroPassagens(posicoes) > 1:
+			#Escolhe o caminho na prioridade, mas tem que ser diferente do ultimo
+			for i in range(4):
+				if posicoes[i*3 +1] == '1':
+					if (i != self.__prevpath - 2 and i != self.__prevpath + 2):
+						acao = i
+						break
+		else:
+			for i in range(4):
+				if posicoes[i*3 +1] == '1':
+					acao = i
+					break
+		
+		#-----------------------------Jeito++-----------------------------
+		
+		#print "acao = ",acao,"Movendo para " , acoes[acao*3+1]
 		
 		return acao
 
@@ -139,12 +179,12 @@ class Mapa:
 		return False
 
 	#pega o vetor e diz o numero de passagens que existem
-	def numeroPassagens(posicoes):
+	def numeroPassagens(self,posicoes):
 		contador = 0
 		#percorre as direcoes e conta os 1's
 		for i in range(4):
 			if posicoes[i*3 +1] == '1':
-				contador++
+				contador += 1
 		return contador
 
 class Solver(spade.Agent.Agent):
